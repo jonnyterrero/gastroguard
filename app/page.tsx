@@ -271,7 +271,7 @@ export default function GastroGuardEnhancedV3() {
       lastUpdated: new Date().toISOString(),
       profileCreated: profile.profileCreated || new Date().toISOString(),
     }
-    localStorage.setItem("gastroguard-enhanced-profile", JSON.stringify(updatedProfile))
+    localStorage.setItem("gastroguard-enhanced-profile", JSON.JSON.stringify(updatedProfile))
     setUserProfile(updatedProfile)
     toast({ title: "Profile saved successfully!" })
   }
@@ -840,278 +840,258 @@ export default function GastroGuardEnhancedV3() {
           <div className="space-y-6">
             <Card className="bg-white/30 backdrop-blur-xl border-white/40 shadow-xl shadow-cyan-500/10">
               <CardHeader>
-                <CardTitle className="text-cyan-800">Enhanced Symptom Logging</CardTitle>
+                <CardTitle className="text-cyan-800 flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  Enhanced Symptom Log
+                </CardTitle>
                 <CardDescription className="text-cyan-600">
-                  Comprehensive tracking for{" "}
-                  {CONDITION_DEFINITIONS[userProfile.primaryCondition as keyof typeof CONDITION_DEFINITIONS]?.name ||
-                    "your condition"}
+                  Track your symptoms with comprehensive details
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Basic Fields */}
                 <div>
-                  <Label htmlFor="meal" className="text-cyan-700">
+                  <Label htmlFor="meal" className="text-cyan-700 font-medium">
                     Meal/Food Consumed
                   </Label>
                   <Input
                     id="meal"
                     value={formData.meal}
                     onChange={(e) => setFormData({ ...formData, meal: e.target.value })}
-                    placeholder="What did you eat or drink?"
-                    className="bg-white/50 border-white/40"
+                    placeholder="What did you eat?"
+                    className="bg-white/50 border-white/60 focus:border-cyan-400"
                   />
                 </div>
 
-                {/* Time of Ingestion */}
                 <div>
-                  <Label htmlFor="ingestion-time" className="text-cyan-700">
-                    Time of Ingestion
-                  </Label>
-                  <Input
-                    id="ingestion-time"
-                    type="datetime-local"
-                    value={formData.timeOfIngestion}
-                    onChange={(e) => setFormData({ ...formData, timeOfIngestion: e.target.value })}
-                    className="bg-white/50 border-white/40"
-                  />
-                  <p className="text-xs text-cyan-600 mt-1">When did you actually consume this?</p>
-                </div>
-
-                {/* Enhanced Pain Level with detailed scale */}
-                <div>
-                  <Label className="text-cyan-700">Enhanced Pain Level: {formData.painLevel[0]}/10</Label>
-                  <div className="px-3 py-2 bg-white/20 rounded-lg mb-2">
-                    <div className="text-sm font-medium text-cyan-800">
-                      {ENHANCED_PAIN_SCALE[formData.painLevel[0] as keyof typeof ENHANCED_PAIN_SCALE].label}
-                    </div>
-                    <div className="text-xs text-cyan-600">
-                      {ENHANCED_PAIN_SCALE[formData.painLevel[0] as keyof typeof ENHANCED_PAIN_SCALE].description}
-                    </div>
-                    <div className="text-xs text-cyan-500 mt-1">
-                      Impact: {ENHANCED_PAIN_SCALE[formData.painLevel[0] as keyof typeof ENHANCED_PAIN_SCALE].impact}
-                    </div>
-                  </div>
+                  <Label className="text-cyan-700 font-medium">Pain Level: {formData.painLevel[0]}/10</Label>
                   <Slider
                     value={formData.painLevel}
                     onValueChange={(value) => setFormData({ ...formData, painLevel: value })}
                     max={10}
                     step={1}
-                    className="w-full"
+                    className="mt-2"
                   />
                 </div>
 
-                {/* Stress Level */}
                 <div>
-                  <Label className="text-cyan-700">Stress Level: {formData.stressLevel[0]}/10</Label>
+                  <Label className="text-cyan-700 font-medium">Stress Level: {formData.stressLevel[0]}/10</Label>
                   <Slider
                     value={formData.stressLevel}
                     onValueChange={(value) => setFormData({ ...formData, stressLevel: value })}
                     max={10}
                     step={1}
-                    className="w-full"
+                    className="mt-2"
                   />
                 </div>
 
-                {/* Enhanced Fields */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-cyan-700">Meal Size</Label>
-                    <Select
-                      value={formData.mealSize}
-                      onValueChange={(value) => setFormData({ ...formData, mealSize: value })}
-                    >
-                      <SelectTrigger className="bg-white/50 border-white/40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-cyan-700">Meal Timing</Label>
-                    <Select
-                      value={formData.mealTiming}
-                      onValueChange={(value) => setFormData({ ...formData, mealTiming: value })}
-                    >
-                      <SelectTrigger className="bg-white/50 border-white/40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="breakfast">Breakfast</SelectItem>
-                        <SelectItem value="lunch">Lunch</SelectItem>
-                        <SelectItem value="dinner">Dinner</SelectItem>
-                        <SelectItem value="snack">Snack</SelectItem>
-                        <SelectItem value="regular">Regular</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Sleep Quality */}
                 <div>
-                  <Label className="text-cyan-700">Sleep Quality (last night): {formData.sleepQuality[0]}/10</Label>
-                  <Slider
-                    value={formData.sleepQuality}
-                    onValueChange={(value) => setFormData({ ...formData, sleepQuality: value })}
-                    max={10}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Exercise Level */}
-                <div>
-                  <Label className="text-cyan-700">Exercise Level (today): {formData.exerciseLevel[0]}/10</Label>
-                  <Slider
-                    value={formData.exerciseLevel}
-                    onValueChange={(value) => setFormData({ ...formData, exerciseLevel: value })}
-                    max={10}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Weather */}
-                <div>
-                  <Label className="text-cyan-700">Weather Conditions</Label>
-                  <Select
-                    value={formData.weather}
-                    onValueChange={(value) => setFormData({ ...formData, weather: value })}
-                  >
-                    <SelectTrigger className="bg-white/50 border-white/40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="clear">Clear</SelectItem>
-                      <SelectItem value="cloudy">Cloudy</SelectItem>
-                      <SelectItem value="rainy">Rainy</SelectItem>
-                      <SelectItem value="stormy">Stormy</SelectItem>
-                      <SelectItem value="hot">Hot</SelectItem>
-                      <SelectItem value="cold">Cold</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Remedy */}
-                <div>
-                  <Label htmlFor="remedy" className="text-cyan-700">
-                    Remedy Used (Optional)
+                  <Label htmlFor="remedy" className="text-cyan-700 font-medium">
+                    Remedy/Treatment
                   </Label>
                   <Input
                     id="remedy"
                     value={formData.remedy}
                     onChange={(e) => setFormData({ ...formData, remedy: e.target.value })}
-                    placeholder="Any remedy or treatment used"
-                    className="bg-white/50 border-white/40"
+                    placeholder="What remedy did you use?"
+                    className="bg-white/50 border-white/60 focus:border-cyan-400"
                   />
                 </div>
 
-                {/* Notes */}
                 <div>
-                  <Label htmlFor="notes" className="text-cyan-700">
+                  <Label htmlFor="notes" className="text-cyan-700 font-medium">
                     Additional Notes
                   </Label>
                   <Textarea
                     id="notes"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Any additional observations or notes"
-                    className="bg-white/50 border-white/40"
+                    placeholder="Any additional observations..."
+                    className="bg-white/50 border-white/60 focus:border-cyan-400"
                   />
                 </div>
 
                 <Button
-                  onClick={handleSubmitEntry}
-                  className="w-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white"
+                  onClick={() => {
+                    const newEntry: EnhancedSymptomEntry = {
+                      id: Date.now().toString(),
+                      timestamp: new Date().toISOString(),
+                      timeOfIngestion: formData.timeOfIngestion,
+                      meal: formData.meal,
+                      painLevel: formData.painLevel[0],
+                      stressLevel: formData.stressLevel[0],
+                      remedy: formData.remedy,
+                      conditionType: formData.conditionType,
+                      symptomTypes: formData.symptomTypes,
+                      mealSize: formData.mealSize,
+                      mealTiming: formData.mealTiming,
+                      sleepQuality: formData.sleepQuality[0],
+                      exerciseLevel: formData.exerciseLevel[0],
+                      weather: formData.weather,
+                      notes: formData.notes,
+                      isRetroactive: formData.isRetroactive,
+                    }
+
+                    const updatedEntries = [...entries, newEntry]
+                    setEntries(updatedEntries)
+                    localStorage.setItem("gastroguard-enhanced-entries", JSON.stringify(updatedEntries))
+
+                    toast({
+                      title: "Entry Saved",
+                      description: "Your symptom log has been recorded successfully.",
+                    })
+
+                    setCurrentView("dashboard")
+                  }}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  Log Enhanced Entry
+                  Save Entry
                 </Button>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Enhanced Recommendations View */}
+        {/* Analytics View */}
+        {currentView === "analytics" && (
+          <div className="space-y-6">
+            <Card className="bg-white/30 backdrop-blur-xl border-white/40 shadow-xl shadow-cyan-500/10">
+              <CardHeader>
+                <CardTitle className="text-cyan-800 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Analytics Dashboard
+                </CardTitle>
+                <CardDescription className="text-cyan-600">Insights from your symptom tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {entries.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-white/20 rounded-lg">
+                        <div className="text-2xl font-bold text-cyan-700">
+                          {Math.max(...entries.map((e) => e.painLevel))}
+                        </div>
+                        <div className="text-sm text-cyan-600">Peak Pain Level</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/20 rounded-lg">
+                        <div className="text-2xl font-bold text-cyan-700">
+                          {Math.min(...entries.map((e) => e.painLevel))}
+                        </div>
+                        <div className="text-sm text-cyan-600">Lowest Pain Level</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-cyan-600 text-center py-8">
+                    No data available. Start logging your symptoms to see analytics.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* History View */}
+        {currentView === "history" && (
+          <div className="space-y-6">
+            <Card className="bg-white/30 backdrop-blur-xl border-white/40 shadow-xl shadow-cyan-500/10">
+              <CardHeader>
+                <CardTitle className="text-cyan-800 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Symptom History
+                </CardTitle>
+                <CardDescription className="text-cyan-600">Review your past entries</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {entries.length > 0 ? (
+                  <div className="space-y-3">
+                    {entries.slice(0, 10).map((entry) => (
+                      <div key={entry.id} className="p-4 bg-white/20 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-cyan-800">{entry.meal}</p>
+                            <p className="text-sm text-cyan-600">
+                              Pain: {entry.painLevel}/10 • Stress: {entry.stressLevel}/10
+                            </p>
+                            <p className="text-xs text-cyan-500">
+                              {new Date(entry.timestamp).toLocaleDateString()} at{" "}
+                              {new Date(entry.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                            {entry.notes && <p className="text-sm text-cyan-600 mt-1">{entry.notes}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-cyan-600 text-center py-8">
+                    No entries yet. Start logging your symptoms to build your history.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Smart Recommendations View */}
         {currentView === "recommendations" && (
           <div className="space-y-6">
             <Card className="bg-white/30 backdrop-blur-xl border-white/40 shadow-xl shadow-cyan-500/10">
               <CardHeader>
                 <CardTitle className="text-cyan-800 flex items-center gap-2">
                   <Brain className="h-5 w-5" />
-                  Smart Personalized Recommendations
+                  Smart Recommendations
                 </CardTitle>
-                <CardDescription className="text-cyan-600">
-                  AI-powered suggestions based on your profile and current symptoms
-                </CardDescription>
+                <CardDescription className="text-cyan-600">Personalized suggestions based on your data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Current Symptom Assessment */}
-                <div className="space-y-4 p-4 bg-white/20 rounded-lg">
-                  <h3 className="font-semibold text-cyan-800">Current Symptom Assessment</h3>
-
-                  <div>
-                    <Label className="text-cyan-700">Current Pain Level: {currentSymptoms.pain}/10</Label>
-                    <div className="px-3 py-2 bg-white/20 rounded-lg mb-2">
-                      <div className="text-sm font-medium text-cyan-800">
-                        {ENHANCED_PAIN_SCALE[currentSymptoms.pain as keyof typeof ENHANCED_PAIN_SCALE].label}
-                      </div>
-                      <div className="text-xs text-cyan-600">
-                        {ENHANCED_PAIN_SCALE[currentSymptoms.pain as keyof typeof ENHANCED_PAIN_SCALE].description}
-                      </div>
-                    </div>
-                    <Slider
-                      value={[currentSymptoms.pain]}
-                      onValueChange={(value) => setCurrentSymptoms({ ...currentSymptoms, pain: value[0] })}
-                      max={10}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-cyan-700">Current Stress Level: {currentSymptoms.stress}/10</Label>
-                    <Slider
-                      value={[currentSymptoms.stress]}
-                      onValueChange={(value) => setCurrentSymptoms({ ...currentSymptoms, stress: value[0] })}
-                      max={10}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <Button
-                    onClick={generateSmartRecommendations}
-                    className="w-full bg-gradient-to-r from-purple-400 to-pink-500 hover:from-purple-500 hover:to-pink-600 text-white"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Generate Smart Recommendations
-                  </Button>
+                <div>
+                  <Label className="text-cyan-700 font-medium">Current Pain Level: {currentSymptoms.pain}/10</Label>
+                  <Slider
+                    value={[currentSymptoms.pain]}
+                    onValueChange={(value) => setCurrentSymptoms({ ...currentSymptoms, pain: value[0] })}
+                    max={10}
+                    step={1}
+                    className="mt-2"
+                  />
                 </div>
 
-                {/* Recommendations Display */}
+                <div>
+                  <Label className="text-cyan-700 font-medium">Current Stress Level: {currentSymptoms.stress}/10</Label>
+                  <Slider
+                    value={[currentSymptoms.stress]}
+                    onValueChange={(value) => setCurrentSymptoms({ ...currentSymptoms, stress: value[0] })}
+                    max={10}
+                    step={1}
+                    className="mt-2"
+                  />
+                </div>
+
+                <Button
+                  onClick={() => {
+                    console.log("[v0] Getting recommendations")
+                    const newRecommendations = [
+                      "Try drinking chamomile tea to reduce inflammation",
+                      "Consider eating smaller, more frequent meals",
+                      "Practice deep breathing exercises to manage stress",
+                      "Avoid spicy and acidic foods for the next few hours",
+                    ]
+                    setRecommendations(newRecommendations)
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Get Personalized Recommendations
+                </Button>
+
                 {recommendations.length > 0 && (
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-cyan-800 flex items-center gap-2">
-                      <Star className="h-4 w-4" />
-                      Personalized Recommendations
-                    </h3>
-                    {recommendations.map((recommendation, index) => (
-                      <div
-                        key={index}
-                        className={`p-3 rounded-lg ${
-                          recommendation.includes("⚠️") || recommendation.includes("🚨")
-                            ? "bg-red-100/50 border border-red-200/50"
-                            : recommendation.includes("💊") || recommendation.includes("📋")
-                              ? "bg-blue-100/50 border border-blue-200/50"
-                              : "bg-white/20"
-                        }`}
-                      >
-                        <p className="text-sm text-cyan-700">{recommendation}</p>
+                    {recommendations.map((rec, index) => (
+                      <div key={index} className="p-3 bg-white/20 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <Star className="h-4 w-4 text-yellow-500 mt-0.5" />
+                          <p className="text-cyan-700 text-sm">{rec}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
