@@ -1,13 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/hooks/use-toast"
 import {
   Activity,
   ArrowLeft,
@@ -84,7 +77,6 @@ export default function GastroGuardApp() {
   // Current symptom tracking state
   const [currentPainLevel, setCurrentPainLevel] = useState(0)
   const [currentStressLevel, setCurrentStressLevel] = useState(0)
-  const [currentSymptoms, setCurrentSymptoms] = useState<string[]>([])
 
   // Enhanced logging state
   const [painLevel, setPainLevel] = useState(0)
@@ -152,22 +144,24 @@ export default function GastroGuardApp() {
   ]
 
   const conditions = ["Gastritis", "GERD", "IBS", "Dyspepsia", "Food Sensitivities", "IBD"]
-
   const weatherOptions = ["Sunny", "Cloudy", "Rainy", "Stormy", "Hot", "Cold", "Humid", "Dry"]
-
   const genderOptions = ["Male", "Female", "Non-binary", "Prefer not to say", "AMAB", "AFAB"]
 
   useEffect(() => {
     setMounted(true)
     // Load data from localStorage
-    const savedEntries = localStorage.getItem("gastroguard-entries")
-    const savedProfile = localStorage.getItem("gastroguard-profile")
+    try {
+      const savedEntries = localStorage.getItem("gastroguard-entries")
+      const savedProfile = localStorage.getItem("gastroguard-profile")
 
-    if (savedEntries) {
-      setEntries(JSON.parse(savedEntries))
-    }
-    if (savedProfile) {
-      setUserProfile(JSON.parse(savedProfile))
+      if (savedEntries) {
+        setEntries(JSON.parse(savedEntries))
+      }
+      if (savedProfile) {
+        setUserProfile(JSON.parse(savedProfile))
+      }
+    } catch (error) {
+      console.error("Error loading saved data:", error)
     }
   }, [])
 
@@ -208,20 +202,13 @@ export default function GastroGuardApp() {
     setWeatherCondition("")
     setIngestionTime("")
 
-    toast({
-      title: "Entry Saved",
-      description: "Your symptom log has been recorded successfully.",
-    })
-
+    alert("Entry saved successfully!")
     setCurrentView("dashboard")
   }
 
   const saveProfile = () => {
     localStorage.setItem("gastroguard-profile", JSON.stringify(userProfile))
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully.",
-    })
+    alert("Profile updated successfully!")
   }
 
   const getPersonalizedRecommendations = () => {
@@ -288,7 +275,14 @@ export default function GastroGuardApp() {
   }
 
   if (!mounted) {
-    return null
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading GastroGuard...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -318,48 +312,50 @@ export default function GastroGuardApp() {
         {currentView === "dashboard" && (
           <div className="space-y-6">
             {/* Welcome Card */}
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-red-500" />
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart className="w-5 h-5 text-red-500" />
+                <h2 className="text-xl font-semibold">
                   Welcome back{userProfile.name ? `, ${userProfile.name}` : ""}!
-                </CardTitle>
-                <CardDescription>Track your symptoms and get personalized recommendations</CardDescription>
-              </CardHeader>
-            </Card>
+                </h2>
+              </div>
+              <p className="text-gray-600">Track your symptoms and get personalized recommendations</p>
+            </div>
 
             {/* Current Status */}
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-blue-500" />
-                  Current Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="w-5 h-5 text-blue-500" />
+                <h2 className="text-xl font-semibold">Current Status</h2>
+              </div>
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium">Current Pain Level: {currentPainLevel}/10</Label>
+                  <label className="text-sm font-medium block mb-2">Current Pain Level: {currentPainLevel}/10</label>
                   <p className="text-xs text-gray-600 mb-2">{getPainDescription(currentPainLevel)}</p>
-                  <Slider
-                    value={[currentPainLevel]}
-                    onValueChange={(value) => setCurrentPainLevel(value[0])}
-                    max={10}
-                    step={1}
-                    className="w-full"
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={currentPainLevel}
+                    onChange={(e) => setCurrentPainLevel(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Current Stress Level: {currentStressLevel}/10</Label>
-                  <Slider
-                    value={[currentStressLevel]}
-                    onValueChange={(value) => setCurrentStressLevel(value[0])}
-                    max={10}
-                    step={1}
-                    className="w-full"
+                  <label className="text-sm font-medium block mb-2">
+                    Current Stress Level: {currentStressLevel}/10
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={currentStressLevel}
+                    onChange={(e) => setCurrentStressLevel(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,97 +363,87 @@ export default function GastroGuardApp() {
                 onClick={() => setCurrentView("enhanced-log")}
                 className="p-6 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
               >
-                <PenTool className="w-6 h-6 text-white" />
-                <span className="font-semibold text-white">Enhanced Log</span>
+                <PenTool className="w-6 h-6" />
+                <span className="font-semibold">Enhanced Log</span>
               </button>
 
               <button
                 onClick={() => setCurrentView("smart-recommendations")}
                 className="p-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
               >
-                <Brain className="w-6 h-6 text-white" />
-                <span className="font-semibold text-white">Smart Recommendations</span>
+                <Brain className="w-6 h-6" />
+                <span className="font-semibold">Smart Recommendations</span>
               </button>
             </div>
 
             {/* Today's Summary */}
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-green-500" />
-                  Today's Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{todayEntries.length}</div>
-                    <div className="text-sm text-gray-600">Entries</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-red-500">
-                      {todayEntries.length > 0
-                        ? Math.round(
-                            todayEntries.reduce((sum, entry) => sum + entry.painLevel, 0) / todayEntries.length,
-                          )
-                        : 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Avg Pain</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-orange-500">
-                      {todayEntries.length > 0
-                        ? Math.round(
-                            todayEntries.reduce((sum, entry) => sum + entry.stressLevel, 0) / todayEntries.length,
-                          )
-                        : 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Avg Stress</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-500">
-                      {todayEntries.reduce((sum, entry) => sum + entry.remedies.length, 0)}
-                    </div>
-                    <div className="text-sm text-gray-600">Remedies Used</div>
-                  </div>
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-5 h-5 text-green-500" />
+                <h2 className="text-xl font-semibold">Today's Summary</h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{todayEntries.length}</div>
+                  <div className="text-sm text-gray-600">Entries</div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-500">
+                    {todayEntries.length > 0
+                      ? Math.round(todayEntries.reduce((sum, entry) => sum + entry.painLevel, 0) / todayEntries.length)
+                      : 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Avg Pain</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-500">
+                    {todayEntries.length > 0
+                      ? Math.round(
+                          todayEntries.reduce((sum, entry) => sum + entry.stressLevel, 0) / todayEntries.length,
+                        )
+                      : 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Avg Stress</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-500">
+                    {todayEntries.reduce((sum, entry) => sum + entry.remedies.length, 0)}
+                  </div>
+                  <div className="text-sm text-gray-600">Remedies Used</div>
+                </div>
+              </div>
+            </div>
 
             {/* Recent Entries */}
             {recentEntries.length > 0 && (
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-purple-500" />
-                    Recent Entries
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {recentEntries.map((entry) => (
-                      <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-sm font-medium">
-                            {entry.date} at {entry.time}
+              <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-purple-500" />
+                  <h2 className="text-xl font-semibold">Recent Entries</h2>
+                </div>
+                <div className="space-y-3">
+                  {recentEntries.map((entry) => (
+                    <div key={entry.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-sm font-medium">
+                          {entry.date} at {entry.time}
+                        </span>
+                        <div className="flex gap-2">
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                            Pain: {entry.painLevel}/10
                           </span>
-                          <div className="flex gap-2">
-                            <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-                              Pain: {entry.painLevel}/10
-                            </span>
-                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                              Stress: {entry.stressLevel}/10
-                            </span>
-                          </div>
+                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                            Stress: {entry.stressLevel}/10
+                          </span>
                         </div>
-                        {entry.symptoms.length > 0 && (
-                          <p className="text-sm text-gray-600">Symptoms: {entry.symptoms.join(", ")}</p>
-                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      {entry.symptoms.length > 0 && (
+                        <p className="text-sm text-gray-600">Symptoms: {entry.symptoms.join(", ")}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -465,126 +451,46 @@ export default function GastroGuardApp() {
         {/* Enhanced Log View */}
         {currentView === "enhanced-log" && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PenTool className="w-5 h-5 text-blue-500" />
-                  Enhanced Symptom Log
-                </CardTitle>
-                <CardDescription>
-                  Comprehensive tracking with detailed pain scale and contextual factors
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <PenTool className="w-5 h-5 text-blue-500" />
+                <h2 className="text-xl font-semibold">Enhanced Symptom Log</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Comprehensive tracking with detailed pain scale and contextual factors
+              </p>
+
+              <div className="space-y-6">
                 {/* Pain Level with Enhanced Scale */}
                 <div>
-                  <Label className="text-sm font-medium">Pain Level: {painLevel}/10</Label>
+                  <label className="text-sm font-medium block mb-2">Pain Level: {painLevel}/10</label>
                   <p className="text-xs text-gray-600 mb-2">{getPainDescription(painLevel)}</p>
-                  <Slider
-                    value={[painLevel]}
-                    onValueChange={(value) => setPainLevel(value[0])}
-                    max={10}
-                    step={1}
-                    className="w-full"
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={painLevel}
+                    onChange={(e) => setPainLevel(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
 
                 {/* Stress Level */}
                 <div>
-                  <Label className="text-sm font-medium">Stress Level: {stressLevel}/10</Label>
-                  <Slider
-                    value={[stressLevel]}
-                    onValueChange={(value) => setStressLevel(value[0])}
-                    max={10}
-                    step={1}
-                    className="w-full"
+                  <label className="text-sm font-medium block mb-2">Stress Level: {stressLevel}/10</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={stressLevel}
+                    onChange={(e) => setStressLevel(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
-                </div>
-
-                {/* Meal Context */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Meal Size</Label>
-                    <Select value={mealSize} onValueChange={setMealSize}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select meal size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
-                        <SelectItem value="snack">Snack</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Hours Since Eating: {timeSinceEating}</Label>
-                    <Slider
-                      value={[timeSinceEating]}
-                      onValueChange={(value) => setTimeSinceEating(value[0])}
-                      max={12}
-                      step={0.5}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Time of Ingestion */}
-                <div>
-                  <Label className="text-sm font-medium">Time of Food/Trigger Ingestion</Label>
-                  <Input
-                    type="time"
-                    value={ingestionTime}
-                    onChange={(e) => setIngestionTime(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Lifestyle Factors */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Sleep Quality (1-10): {sleepQuality}</Label>
-                    <Slider
-                      value={[sleepQuality]}
-                      onValueChange={(value) => setSleepQuality(value[0])}
-                      min={1}
-                      max={10}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Exercise Level (0-10): {exerciseLevel}</Label>
-                    <Slider
-                      value={[exerciseLevel]}
-                      onValueChange={(value) => setExerciseLevel(value[0])}
-                      max={10}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Weather Condition */}
-                <div>
-                  <Label className="text-sm font-medium">Weather Condition</Label>
-                  <Select value={weatherCondition} onValueChange={setWeatherCondition}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select weather" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {weatherOptions.map((weather) => (
-                        <SelectItem key={weather} value={weather.toLowerCase()}>
-                          {weather}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 {/* Symptoms */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Symptoms</Label>
+                  <label className="text-sm font-medium mb-2 block">Symptoms</label>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {symptoms.map((symptom) => (
                       <button
@@ -608,66 +514,14 @@ export default function GastroGuardApp() {
                   </div>
                 </div>
 
-                {/* Triggers */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Potential Triggers</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {triggers.map((trigger) => (
-                      <button
-                        key={trigger}
-                        onClick={() => {
-                          if (selectedTriggers.includes(trigger)) {
-                            setSelectedTriggers(selectedTriggers.filter((t) => t !== trigger))
-                          } else {
-                            setSelectedTriggers([...selectedTriggers, trigger])
-                          }
-                        }}
-                        className={`p-2 text-xs rounded-lg border transition-all ${
-                          selectedTriggers.includes(trigger)
-                            ? "bg-red-500 text-white border-red-500"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-red-300"
-                        }`}
-                      >
-                        {trigger}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Remedies */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Remedies Tried</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {remedies.map((remedy) => (
-                      <button
-                        key={remedy}
-                        onClick={() => {
-                          if (selectedRemedies.includes(remedy)) {
-                            setSelectedRemedies(selectedRemedies.filter((r) => r !== remedy))
-                          } else {
-                            setSelectedRemedies([...selectedRemedies, remedy])
-                          }
-                        }}
-                        className={`p-2 text-xs rounded-lg border transition-all ${
-                          selectedRemedies.includes(remedy)
-                            ? "bg-green-500 text-white border-green-500"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-green-300"
-                        }`}
-                      >
-                        {remedy}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Notes */}
                 <div>
-                  <Label className="text-sm font-medium">Additional Notes</Label>
-                  <Textarea
+                  <label className="text-sm font-medium block mb-2">Additional Notes</label>
+                  <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Any additional details about your symptoms, what you ate, activities, etc."
-                    className="w-full"
+                    className="w-full p-3 border border-gray-200 rounded-lg resize-none h-24"
                   />
                 </div>
 
@@ -678,281 +532,62 @@ export default function GastroGuardApp() {
                   <Save className="w-5 h-5" />
                   Save Entry
                 </button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-        )}
-
-        {/* Other views would continue here... */}
-        {/* For brevity, I'll add placeholder views */}
-        {currentView === "analytics" && (
-          <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle>Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Analytics view coming soon...</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {currentView === "history" && (
-          <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle>History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>History view coming soon...</p>
-            </CardContent>
-          </Card>
         )}
 
         {/* Smart Recommendations View */}
         {currentView === "smart-recommendations" && (
-          <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5 text-purple-500" />
-                Smart Recommendations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {getPersonalizedRecommendations().map((recommendation, index) => (
-                  <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <p className="text-sm">{recommendation}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Brain className="w-5 h-5 text-purple-500" />
+              <h2 className="text-xl font-semibold">Smart Recommendations</h2>
+            </div>
+            <div className="space-y-4">
+              {getPersonalizedRecommendations().map((recommendation, index) => (
+                <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                  <p className="text-sm">{recommendation}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
+        {/* Profile View */}
         {currentView === "profile" && (
           <div className="space-y-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20 shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-green-500" />
-                  Personal Profile
-                </CardTitle>
-                <CardDescription>
-                  Complete your profile for personalized recommendations and better tracking
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity className="w-5 h-5 text-green-500" />
+                <h2 className="text-xl font-semibold">Personal Profile</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Complete your profile for personalized recommendations and better tracking
+              </p>
+
+              <div className="space-y-6">
                 {/* Basic Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium">Name</Label>
-                    <Input
+                    <label className="text-sm font-medium block mb-2">Name</label>
+                    <input
+                      type="text"
                       value={userProfile.name}
                       onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
                       placeholder="Enter your name"
-                      className="w-full"
+                      className="w-full p-3 border border-gray-200 rounded-lg"
                     />
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Age</Label>
-                    <Input
+                    <label className="text-sm font-medium block mb-2">Age</label>
+                    <input
                       type="number"
                       value={userProfile.age || ""}
                       onChange={(e) => setUserProfile({ ...userProfile, age: Number.parseInt(e.target.value) || 0 })}
                       placeholder="Enter your age"
-                      className="w-full"
+                      className="w-full p-3 border border-gray-200 rounded-lg"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Height</Label>
-                    <Input
-                      value={userProfile.height}
-                      onChange={(e) => setUserProfile({ ...userProfile, height: e.target.value })}
-                      placeholder="e.g., 5'8 or 173cm"
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Weight</Label>
-                    <Input
-                      value={userProfile.weight}
-                      onChange={(e) => setUserProfile({ ...userProfile, weight: e.target.value })}
-                      placeholder="e.g., 150 lbs or 68 kg"
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Gender</Label>
-                    <Select
-                      value={userProfile.gender}
-                      onValueChange={(value) => setUserProfile({ ...userProfile, gender: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {genderOptions.map((gender) => (
-                          <SelectItem key={gender} value={gender.toLowerCase()}>
-                            {gender}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Medical Conditions */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Medical Conditions</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {conditions.map((condition) => (
-                      <button
-                        key={condition}
-                        onClick={() => {
-                          if (userProfile.conditions.includes(condition)) {
-                            setUserProfile({
-                              ...userProfile,
-                              conditions: userProfile.conditions.filter((c) => c !== condition),
-                            })
-                          } else {
-                            setUserProfile({
-                              ...userProfile,
-                              conditions: [...userProfile.conditions, condition],
-                            })
-                          }
-                        }}
-                        className={`p-2 text-xs rounded-lg border transition-all ${
-                          userProfile.conditions.includes(condition)
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"
-                        }`}
-                      >
-                        {condition}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Medications */}
-                <div>
-                  <Label className="text-sm font-medium">Current Medications</Label>
-                  <Textarea
-                    value={userProfile.medications.join(", ")}
-                    onChange={(e) =>
-                      setUserProfile({
-                        ...userProfile,
-                        medications: e.target.value
-                          .split(",")
-                          .map((med) => med.trim())
-                          .filter((med) => med),
-                      })
-                    }
-                    placeholder="List your current medications (separated by commas)"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Allergies */}
-                <div>
-                  <Label className="text-sm font-medium">Allergies</Label>
-                  <Textarea
-                    value={userProfile.allergies.join(", ")}
-                    onChange={(e) =>
-                      setUserProfile({
-                        ...userProfile,
-                        allergies: e.target.value
-                          .split(",")
-                          .map((allergy) => allergy.trim())
-                          .filter((allergy) => allergy),
-                      })
-                    }
-                    placeholder="List your allergies (separated by commas)"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Dietary Restrictions */}
-                <div>
-                  <Label className="text-sm font-medium">Dietary Restrictions</Label>
-                  <Textarea
-                    value={userProfile.dietaryRestrictions.join(", ")}
-                    onChange={(e) =>
-                      setUserProfile({
-                        ...userProfile,
-                        dietaryRestrictions: e.target.value
-                          .split(",")
-                          .map((restriction) => restriction.trim())
-                          .filter((restriction) => restriction),
-                      })
-                    }
-                    placeholder="List your dietary restrictions (separated by commas)"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Known Triggers */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Known Triggers</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {triggers.map((trigger) => (
-                      <button
-                        key={trigger}
-                        onClick={() => {
-                          if (userProfile.triggers.includes(trigger)) {
-                            setUserProfile({
-                              ...userProfile,
-                              triggers: userProfile.triggers.filter((t) => t !== trigger),
-                            })
-                          } else {
-                            setUserProfile({
-                              ...userProfile,
-                              triggers: [...userProfile.triggers, trigger],
-                            })
-                          }
-                        }}
-                        className={`p-2 text-xs rounded-lg border transition-all ${
-                          userProfile.triggers.includes(trigger)
-                            ? "bg-red-500 text-white border-red-500"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-red-300"
-                        }`}
-                      >
-                        {trigger}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Effective Remedies */}
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Effective Remedies</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {remedies.map((remedy) => (
-                      <button
-                        key={remedy}
-                        onClick={() => {
-                          if (userProfile.effectiveRemedies.includes(remedy)) {
-                            setUserProfile({
-                              ...userProfile,
-                              effectiveRemedies: userProfile.effectiveRemedies.filter((r) => r !== remedy),
-                            })
-                          } else {
-                            setUserProfile({
-                              ...userProfile,
-                              effectiveRemedies: [...userProfile.effectiveRemedies, remedy],
-                            })
-                          }
-                        }}
-                        className={`p-2 text-xs rounded-lg border transition-all ${
-                          userProfile.effectiveRemedies.includes(remedy)
-                            ? "bg-green-500 text-white border-green-500"
-                            : "bg-white text-gray-700 border-gray-200 hover:border-green-300"
-                        }`}
-                      >
-                        {remedy}
-                      </button>
-                    ))}
                   </div>
                 </div>
 
@@ -963,12 +598,28 @@ export default function GastroGuardApp() {
                   <Save className="w-5 h-5" />
                   Save Profile
                 </button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Other placeholder views */}
+        {currentView === "analytics" && (
+          <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Analytics</h2>
+            <p>Analytics view coming soon...</p>
+          </div>
+        )}
+
+        {currentView === "history" && (
+          <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">History</h2>
+            <p>History view coming soon...</p>
           </div>
         )}
       </div>
 
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 px-4 py-2">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {[
@@ -987,7 +638,7 @@ export default function GastroGuardApp() {
                   : "text-gray-600 hover:text-cyan-600 hover:bg-gray-50"
               }`}
             >
-              {tab.icon && <tab.icon className="w-5 h-5" />}
+              <tab.icon className="w-5 h-5" />
               <span className="text-xs font-medium">{tab.label}</span>
             </button>
           ))}
