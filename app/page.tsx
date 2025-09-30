@@ -1012,57 +1012,227 @@ export default function GastroGuardApp() {
 
             {/* Simulation Results */}
             {simulationResults && (
-              <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Brain className="w-5 h-5 text-purple-500" />
-                  <h2 className="text-xl font-semibold">Simulation Results</h2>
-                </div>
+              <div className="space-y-6">
+                <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Brain className="w-5 h-5 text-purple-500" />
+                    <h2 className="text-xl font-semibold">Simulation Results</h2>
+                  </div>
 
-                {/* Risk Level Badge */}
-                <div className="mb-6">
-                  <div
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
-                      simulationResults.riskScore >= 7
-                        ? "bg-red-100 text-red-700"
-                        : simulationResults.riskScore >= 4
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    <span className="text-2xl">{simulationResults.riskScore}/10</span>
-                    <span>{simulationResults.riskLevel}</span>
+                  {/* Risk Level Badge */}
+                  <div className="mb-6">
+                    <div
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
+                        simulationResults.riskScore >= 7
+                          ? "bg-red-100 text-red-700"
+                          : simulationResults.riskScore >= 4
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      <span className="text-2xl">{simulationResults.riskScore}/10</span>
+                      <span>{simulationResults.riskLevel}</span>
+                    </div>
+                  </div>
+
+                  {/* Predictions */}
+                  <div className="mb-6">
+                    <h3 className="font-semibold mb-3">Predictions</h3>
+                    <div className="space-y-2">
+                      {simulationResults.predictions.map((prediction, index) => (
+                        <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                          <p className="text-sm">{prediction}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  <div>
+                    <h3 className="font-semibold mb-3">Recommendations</h3>
+                    <div className="space-y-2">
+                      {simulationResults.recommendations.map((recommendation, index) => (
+                        <div key={index} className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                          <p className="text-sm">{recommendation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      <strong>Note:</strong> This simulation is based on your historical data and general patterns. It's
+                      not medical advice. Always consult with your healthcare provider for personalized guidance.
+                    </p>
                   </div>
                 </div>
 
-                {/* Predictions */}
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-3">Predictions</h3>
-                  <div className="space-y-2">
-                    {simulationResults.predictions.map((prediction, index) => (
-                      <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                        <p className="text-sm">{prediction}</p>
-                      </div>
-                    ))}
+                <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <BarChart className="w-5 h-5 text-blue-500" />
+                    <h2 className="text-xl font-semibold">Pain Timeline Prediction</h2>
                   </div>
-                </div>
-
-                {/* Recommendations */}
-                <div>
-                  <h3 className="font-semibold mb-3">Recommendations</h3>
-                  <div className="space-y-2">
-                    {simulationResults.recommendations.map((recommendation, index) => (
-                      <div key={index} className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-                        <p className="text-sm">{recommendation}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-xs text-gray-600">
-                    <strong>Note:</strong> This simulation is based on your historical data and general patterns. It's
-                    not medical advice. Always consult with your healthcare provider for personalized guidance.
+                  <p className="text-sm text-gray-600 mb-6">
+                    Predicted pain levels over time based on your historical data for similar foods
                   </p>
+
+                  {/* Graph */}
+                  <div className="relative h-64 mb-4">
+                    {/* Y-axis labels */}
+                    <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between text-xs text-gray-500">
+                      <span>10</span>
+                      <span>8</span>
+                      <span>6</span>
+                      <span>4</span>
+                      <span>2</span>
+                      <span>0</span>
+                    </div>
+
+                    {/* Graph area */}
+                    <div className="ml-10 h-full border-l-2 border-b-2 border-gray-300 relative">
+                      {/* Grid lines */}
+                      {[0, 1, 2, 3, 4, 5].map((i) => (
+                        <div
+                          key={i}
+                          className="absolute left-0 right-0 border-t border-gray-200"
+                          style={{ bottom: `${i * 20}%` }}
+                        />
+                      ))}
+
+                      {/* Historical data points */}
+                      {(() => {
+                        const relevantEntries = entries.filter((entry) => {
+                          const entryFoods = entry.notes.toLowerCase()
+                          const searchFood = simulationFood.toLowerCase()
+                          return (
+                            entryFoods.includes(searchFood) ||
+                            entry.triggers.some((t) => searchFood.includes(t.toLowerCase()))
+                          )
+                        })
+
+                        return relevantEntries.slice(0, 10).map((entry, index) => {
+                          const timeOffset = entry.timeSinceEating || Math.random() * 6
+                          const xPos = (timeOffset / 8) * 100
+                          const yPos = (entry.painLevel / 10) * 100
+
+                          return (
+                            <div
+                              key={entry.id}
+                              className="absolute w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-lg"
+                              style={{
+                                left: `${xPos}%`,
+                                bottom: `${yPos}%`,
+                                transform: "translate(-50%, 50%)",
+                              }}
+                              title={`Pain: ${entry.painLevel}/10 at ${timeOffset.toFixed(1)}h`}
+                            />
+                          )
+                        })
+                      })()}
+
+                      {/* Predicted pain curve */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                        <path
+                          d={(() => {
+                            const riskScore = simulationResults.riskScore
+                            const points = []
+
+                            // Generate curve points based on typical gastritis pain pattern
+                            for (let i = 0; i <= 8; i += 0.5) {
+                              const x = (i / 8) * 100
+                              let y
+
+                              if (i < 0.5) {
+                                // Initial onset
+                                y = (riskScore * 0.3 * (i / 0.5)) / 10
+                              } else if (i < 2) {
+                                // Peak pain
+                                y = (riskScore * (0.3 + 0.7 * ((i - 0.5) / 1.5))) / 10
+                              } else if (i < 4) {
+                                // Sustained pain
+                                y = (riskScore * (1 - 0.2 * ((i - 2) / 2))) / 10
+                              } else {
+                                // Gradual relief
+                                y = (riskScore * (0.8 - 0.6 * ((i - 4) / 4))) / 10
+                              }
+
+                              points.push(`${x},${(1 - y) * 100}`)
+                            }
+
+                            return `M ${points.join(" L ")}`
+                          })()}
+                          fill="none"
+                          stroke="#f59e0b"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+
+                      {/* Ingestion marker */}
+                      <div className="absolute bottom-0 w-0.5 bg-green-500" style={{ left: "0%", height: "100%" }}>
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-green-600 whitespace-nowrap">
+                          Ingestion
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* X-axis labels */}
+                    <div className="ml-10 mt-2 flex justify-between text-xs text-gray-500">
+                      <span>0h</span>
+                      <span>2h</span>
+                      <span>4h</span>
+                      <span>6h</span>
+                      <span>8h</span>
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex flex-wrap gap-4 justify-center text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white" />
+                      <span className="text-gray-600">Historical Data</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-0.5 bg-yellow-500" />
+                      <span className="text-gray-600">Predicted Pain Curve</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-0.5 h-4 bg-green-500" />
+                      <span className="text-gray-600">Time of Ingestion</span>
+                    </div>
+                  </div>
+
+                  {/* Data Summary */}
+                  <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {
+                          entries.filter((entry) => {
+                            const entryFoods = entry.notes.toLowerCase()
+                            const searchFood = simulationFood.toLowerCase()
+                            return (
+                              entryFoods.includes(searchFood) ||
+                              entry.triggers.some((t) => searchFood.includes(t.toLowerCase()))
+                            )
+                          }).length
+                        }
+                      </div>
+                      <div className="text-xs text-gray-600">Similar Entries</div>
+                    </div>
+                    <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600">{simulationResults.riskScore}/10</div>
+                      <div className="text-xs text-gray-600">Peak Pain</div>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">2-4h</div>
+                      <div className="text-xs text-gray-600">Peak Time</div>
+                    </div>
+                    <div className="text-center p-3 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">6-8h</div>
+                      <div className="text-xs text-gray-600">Recovery Time</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
