@@ -13,6 +13,10 @@ import {
   PenTool,
   BarChart,
   History,
+  Link2,
+  Copy,
+  RefreshCw,
+  Trash2,
 } from "lucide-react"
 
 interface LogEntry {
@@ -47,6 +51,15 @@ interface UserProfile {
   effectiveRemedies: string[]
 }
 
+interface Integration {
+  id: string
+  name: string
+  apiKey: string
+  createdAt: string
+  lastUsed?: string
+  permissions: string[]
+}
+
 export default function GastroGuardApp() {
   const [mounted, setMounted] = useState(false)
   const [currentView, setCurrentView] = useState("dashboard")
@@ -64,6 +77,9 @@ export default function GastroGuardApp() {
     triggers: [],
     effectiveRemedies: [],
   })
+
+  const [integrations, setIntegrations] = useState<Integration[]>([])
+  const [showApiKey, setShowApiKey] = useState<string | null>(null)
 
   const todayEntries = useMemo(() => {
     const today = new Date().toDateString()
@@ -153,12 +169,16 @@ export default function GastroGuardApp() {
     try {
       const savedEntries = localStorage.getItem("gastroguard-entries")
       const savedProfile = localStorage.getItem("gastroguard-profile")
+      const savedIntegrations = localStorage.getItem("gastroguard-integrations")
 
       if (savedEntries) {
         setEntries(JSON.parse(savedEntries))
       }
       if (savedProfile) {
         setUserProfile(JSON.parse(savedProfile))
+      }
+      if (savedIntegrations) {
+        setIntegrations(JSON.parse(savedIntegrations))
       }
     } catch (error) {
       console.error("Error loading saved data:", error)
@@ -186,7 +206,7 @@ export default function GastroGuardApp() {
 
     const updatedEntries = [...entries, newEntry]
     setEntries(updatedEntries)
-    localStorage.setItem("gastroguard-entries", JSON.stringify(updatedEntries))
+    localStorage.setItem("gastroguard-entries", JSON.JSON.stringify(updatedEntries))
 
     // Reset form
     setPainLevel(0)
@@ -211,9 +231,59 @@ export default function GastroGuardApp() {
     alert("Profile updated successfully!")
   }
 
-  const getPersonalizedRecommendations = () => {
-    console.log("[v0] Getting personalized recommendations")
+  const generateApiKey = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    let key = "gg_"
+    for (let i = 0; i < 32; i++) {
+      key += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return key
+  }
 
+  const createIntegration = () => {
+    const name = prompt("Enter a name for this integration (e.g., 'My Fitness App', 'Meal Tracker'):")
+    if (!name) return
+
+    const newIntegration: Integration = {
+      id: Date.now().toString(),
+      name,
+      apiKey: generateApiKey(),
+      createdAt: new Date().toISOString(),
+      permissions: ["read:entries", "write:entries", "read:profile", "read:analytics"],
+    }
+
+    const updatedIntegrations = [...integrations, newIntegration]
+    setIntegrations(updatedIntegrations)
+    localStorage.setItem("gastroguard-integrations", JSON.stringify(updatedIntegrations))
+    alert(`Integration "${name}" created successfully!`)
+  }
+
+  const regenerateApiKey = (integrationId: string) => {
+    if (!confirm("Are you sure you want to regenerate this API key? The old key will stop working.")) return
+
+    const updatedIntegrations = integrations.map((integration) =>
+      integration.id === integrationId ? { ...integration, apiKey: generateApiKey() } : integration,
+    )
+    setIntegrations(updatedIntegrations)
+    localStorage.setItem("gastroguard-integrations", JSON.stringify(updatedIntegrations))
+    alert("API key regenerated successfully!")
+  }
+
+  const deleteIntegration = (integrationId: string) => {
+    if (!confirm("Are you sure you want to delete this integration? This action cannot be undone.")) return
+
+    const updatedIntegrations = integrations.filter((integration) => integration.id !== integrationId)
+    setIntegrations(updatedIntegrations)
+    localStorage.setItem("gastroguard-integrations", JSON.stringify(updatedIntegrations))
+    alert("Integration deleted successfully!")
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    alert("Copied to clipboard!")
+  }
+
+  const getPersonalizedRecommendations = () => {
     if (!userProfile.name) {
       return ["Please complete your profile first to get personalized recommendations."]
     }
@@ -598,6 +668,122 @@ export default function GastroGuardApp() {
                   <Save className="w-5 h-5" />
                   Save Profile
                 </button>
+              </div>
+            </div>
+
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Link2 className="w-5 h-5 text-blue-500" />
+                  <h2 className="text-xl font-semibold">App Integrations</h2>
+                </div>
+                <button
+                  onClick={createIntegration}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                >
+                  + New Integration
+                </button>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Connect GastroGuard with your other apps using API keys. Share your health data securely across
+                platforms.
+              </p>
+
+              {integrations.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Link2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No integrations yet. Create one to get started!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {integrations.map((integration) => (
+                    <div key={integration.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{integration.name}</h3>
+                          <p className="text-xs text-gray-500">
+                            Created {new Date(integration.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => regenerateApiKey(integration.id)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Regenerate API Key"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteIntegration(integration.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Integration"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <label className="text-xs font-medium text-gray-600 block mb-1">API Key</label>
+                        <div className="flex gap-2">
+                          <input
+                            type={showApiKey === integration.id ? "text" : "password"}
+                            value={integration.apiKey}
+                            readOnly
+                            className="flex-1 p-2 bg-white border border-gray-200 rounded text-sm font-mono"
+                          />
+                          <button
+                            onClick={() => setShowApiKey(showApiKey === integration.id ? null : integration.id)}
+                            className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm transition-colors"
+                          >
+                            {showApiKey === integration.id ? "Hide" : "Show"}
+                          </button>
+                          <button
+                            onClick={() => copyToClipboard(integration.apiKey)}
+                            className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 block mb-1">Permissions</label>
+                        <div className="flex flex-wrap gap-1">
+                          {integration.permissions.map((permission) => (
+                            <span key={permission} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              {permission}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-sm mb-2 text-blue-900">API Documentation</h3>
+                <p className="text-xs text-blue-800 mb-3">Use these endpoints to integrate with GastroGuard:</p>
+                <div className="space-y-2 text-xs font-mono bg-white p-3 rounded border border-blue-200">
+                  <div>
+                    <span className="text-green-600 font-semibold">GET</span> /api/entries - Fetch all entries
+                  </div>
+                  <div>
+                    <span className="text-blue-600 font-semibold">POST</span> /api/entries - Create new entry
+                  </div>
+                  <div>
+                    <span className="text-green-600 font-semibold">GET</span> /api/profile - Get user profile
+                  </div>
+                  <div>
+                    <span className="text-green-600 font-semibold">GET</span> /api/analytics - Get analytics data
+                  </div>
+                </div>
+                <p className="text-xs text-blue-700 mt-3">
+                  Include your API key in the Authorization header:{" "}
+                  <code className="bg-white px-1 py-0.5 rounded">Bearer YOUR_API_KEY</code>
+                </p>
               </div>
             </div>
           </div>
