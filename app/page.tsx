@@ -12,11 +12,11 @@ import {
   Home,
   PenTool,
   BarChart,
-  History,
   Link2,
   Copy,
   RefreshCw,
   Trash2,
+  Zap,
 } from "lucide-react"
 
 interface LogEntry {
@@ -80,6 +80,16 @@ export default function GastroGuardApp() {
 
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [showApiKey, setShowApiKey] = useState<string | null>(null)
+
+  const [simulationFood, setSimulationFood] = useState("")
+  const [simulationMealSize, setSimulationMealSize] = useState("medium")
+  const [simulationTimeOfDay, setSimulationTimeOfDay] = useState("lunch")
+  const [simulationResults, setSimulationResults] = useState<{
+    riskLevel: string
+    riskScore: number
+    predictions: string[]
+    recommendations: string[]
+  } | null>(null)
 
   const todayEntries = useMemo(() => {
     const today = new Date().toDateString()
@@ -206,7 +216,7 @@ export default function GastroGuardApp() {
 
     const updatedEntries = [...entries, newEntry]
     setEntries(updatedEntries)
-    localStorage.setItem("gastroguard-entries", JSON.JSON.stringify(updatedEntries))
+    localStorage.setItem("gastroguard-entries", JSON.stringify(updatedEntries))
 
     // Reset form
     setPainLevel(0)
@@ -344,6 +354,123 @@ export default function GastroGuardApp() {
     return descriptions[level] || "Unknown"
   }
 
+  const runSimulation = () => {
+    if (!simulationFood.trim()) {
+      alert("Please enter a food or meal to simulate")
+      return
+    }
+
+    // Analyze historical data to predict outcomes
+    const relevantEntries = entries.filter((entry) => {
+      const entryFoods = entry.notes.toLowerCase()
+      const searchFood = simulationFood.toLowerCase()
+      return entryFoods.includes(searchFood) || entry.triggers.some((t) => searchFood.includes(t.toLowerCase()))
+    })
+
+    let riskScore = 0
+    const predictions: string[] = []
+    const recommendations: string[] = []
+
+    // Calculate risk based on historical data
+    if (relevantEntries.length > 0) {
+      const avgPain = relevantEntries.reduce((sum, e) => sum + e.painLevel, 0) / relevantEntries.length
+      const avgStress = relevantEntries.reduce((sum, e) => sum + e.stressLevel, 0) / relevantEntries.length
+
+      riskScore = Math.round((avgPain + avgStress) / 2)
+
+      predictions.push(`Based on ${relevantEntries.length} similar entries in your history`)
+      predictions.push(`Average pain level: ${avgPain.toFixed(1)}/10`)
+      predictions.push(`Average stress level: ${avgStress.toFixed(1)}/10`)
+
+      // Common symptoms from similar entries
+      const symptomCounts: { [key: string]: number } = {}
+      relevantEntries.forEach((entry) => {
+        entry.symptoms.forEach((symptom) => {
+          symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1
+        })
+      })
+
+      const commonSymptoms = Object.entries(symptomCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([symptom]) => symptom)
+
+      if (commonSymptoms.length > 0) {
+        predictions.push(`Likely symptoms: ${commonSymptoms.join(", ")}`)
+      }
+    } else {
+      // No historical data - use general risk assessment
+      riskScore = 5
+      predictions.push("No historical data found for this food")
+      predictions.push("Risk assessment based on general patterns and your profile")
+
+      // Check against known triggers
+      const matchingTriggers = userProfile.triggers.filter((trigger) =>
+        simulationFood.toLowerCase().includes(trigger.toLowerCase()),
+      )
+
+      if (matchingTriggers.length > 0) {
+        riskScore += 3
+        predictions.push(`⚠️ Contains known triggers: ${matchingTriggers.join(", ")}`)
+      }
+    }
+
+    // Meal size impact
+    if (simulationMealSize === "large") {
+      riskScore += 1
+      predictions.push("Large meal size may increase symptoms")
+    } else if (simulationMealSize === "small") {
+      riskScore -= 1
+      predictions.push("Small meal size may reduce symptoms")
+    }
+
+    // Time of day impact
+    if (simulationTimeOfDay === "late-night") {
+      riskScore += 2
+      predictions.push("Late night eating increases GERD risk")
+    } else if (simulationTimeOfDay === "breakfast") {
+      riskScore -= 1
+      predictions.push("Morning meals typically better tolerated")
+    }
+
+    // Cap risk score
+    riskScore = Math.max(0, Math.min(10, riskScore))
+
+    // Generate recommendations based on risk
+    if (riskScore >= 7) {
+      recommendations.push("⚠️ High risk - Consider avoiding this food")
+      recommendations.push("Have antacids ready if you proceed")
+      recommendations.push("Eat a smaller portion than planned")
+      recommendations.push("Avoid lying down for 3 hours after eating")
+    } else if (riskScore >= 4) {
+      recommendations.push("⚠️ Moderate risk - Proceed with caution")
+      recommendations.push("Eat slowly and chew thoroughly")
+      recommendations.push("Have remedies available")
+      recommendations.push("Monitor symptoms closely")
+    } else {
+      recommendations.push("✓ Low risk - Should be well tolerated")
+      recommendations.push("Still eat mindfully and in moderation")
+      recommendations.push("Stay hydrated")
+    }
+
+    // Condition-specific recommendations
+    if (userProfile.conditions.includes("GERD")) {
+      recommendations.push("GERD: Avoid lying down for 2-3 hours after")
+    }
+    if (userProfile.conditions.includes("IBS")) {
+      recommendations.push("IBS: Consider FODMAP content")
+    }
+
+    const riskLevel = riskScore >= 7 ? "High Risk" : riskScore >= 4 ? "Moderate Risk" : "Low Risk"
+
+    setSimulationResults({
+      riskLevel,
+      riskScore,
+      predictions,
+      recommendations,
+    })
+  }
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
@@ -443,6 +570,15 @@ export default function GastroGuardApp() {
               >
                 <Brain className="w-6 h-6" />
                 <span className="font-semibold">Smart Recommendations</span>
+              </button>
+
+              {/* Added Simulation Button */}
+              <button
+                onClick={() => setCurrentView("simulation")}
+                className="p-6 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
+              >
+                <Zap className="w-6 h-6" />
+                <span className="font-semibold">Symptom Simulator</span>
               </button>
             </div>
 
@@ -654,7 +790,12 @@ export default function GastroGuardApp() {
                     <input
                       type="number"
                       value={userProfile.age || ""}
-                      onChange={(e) => setUserProfile({ ...userProfile, age: Number.parseInt(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setUserProfile({
+                          ...userProfile,
+                          age: Number.parseInt(e.target.value) || 0,
+                        })
+                      }
                       placeholder="Enter your age"
                       className="w-full p-3 border border-gray-200 rounded-lg"
                     />
@@ -763,7 +904,7 @@ export default function GastroGuardApp() {
                 </div>
               )}
 
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h3 className="font-semibold text-sm mb-2 text-blue-900">API Documentation</h3>
                 <p className="text-xs text-blue-800 mb-3">Use these endpoints to integrate with GastroGuard:</p>
                 <div className="space-y-2 text-xs font-mono bg-white p-3 rounded border border-blue-200">
@@ -789,6 +930,145 @@ export default function GastroGuardApp() {
           </div>
         )}
 
+        {/* Simulation View */}
+        {currentView === "simulation" && (
+          <div className="space-y-6">
+            <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Zap className="w-5 h-5 text-yellow-500" />
+                <h2 className="text-xl font-semibold">Symptom Simulator</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Predict how your body might react to foods based on your historical data and patterns
+              </p>
+
+              <div className="space-y-6">
+                {/* Food Input */}
+                <div>
+                  <label className="text-sm font-medium block mb-2">What are you considering eating?</label>
+                  <input
+                    type="text"
+                    value={simulationFood}
+                    onChange={(e) => setSimulationFood(e.target.value)}
+                    placeholder="e.g., Pizza, Spicy curry, Coffee, etc."
+                    className="w-full p-3 border border-gray-200 rounded-lg"
+                  />
+                </div>
+
+                {/* Meal Size */}
+                <div>
+                  <label className="text-sm font-medium block mb-2">Meal Size</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["small", "medium", "large"].map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSimulationMealSize(size)}
+                        className={`p-3 rounded-lg border transition-all capitalize ${
+                          simulationMealSize === size
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Time of Day */}
+                <div>
+                  <label className="text-sm font-medium block mb-2">Time of Day</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { value: "breakfast", label: "Breakfast" },
+                      { value: "lunch", label: "Lunch" },
+                      { value: "dinner", label: "Dinner" },
+                      { value: "late-night", label: "Late Night" },
+                    ].map((time) => (
+                      <button
+                        key={time.value}
+                        onClick={() => setSimulationTimeOfDay(time.value)}
+                        className={`p-3 rounded-lg border transition-all ${
+                          simulationTimeOfDay === time.value
+                            ? "bg-blue-500 text-white border-blue-500"
+                            : "bg-white text-gray-700 border-gray-200 hover:border-blue-300"
+                        }`}
+                      >
+                        {time.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={runSimulation}
+                  className="w-full p-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <Zap className="w-5 h-5" />
+                  Run Simulation
+                </button>
+              </div>
+            </div>
+
+            {/* Simulation Results */}
+            {simulationResults && (
+              <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Brain className="w-5 h-5 text-purple-500" />
+                  <h2 className="text-xl font-semibold">Simulation Results</h2>
+                </div>
+
+                {/* Risk Level Badge */}
+                <div className="mb-6">
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold ${
+                      simulationResults.riskScore >= 7
+                        ? "bg-red-100 text-red-700"
+                        : simulationResults.riskScore >= 4
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    <span className="text-2xl">{simulationResults.riskScore}/10</span>
+                    <span>{simulationResults.riskLevel}</span>
+                  </div>
+                </div>
+
+                {/* Predictions */}
+                <div className="mb-6">
+                  <h3 className="font-semibold mb-3">Predictions</h3>
+                  <div className="space-y-2">
+                    {simulationResults.predictions.map((prediction, index) => (
+                      <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                        <p className="text-sm">{prediction}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommendations */}
+                <div>
+                  <h3 className="font-semibold mb-3">Recommendations</h3>
+                  <div className="space-y-2">
+                    {simulationResults.recommendations.map((recommendation, index) => (
+                      <div key={index} className="p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                        <p className="text-sm">{recommendation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600">
+                    <strong>Note:</strong> This simulation is based on your historical data and general patterns. It's
+                    not medical advice. Always consult with your healthcare provider for personalized guidance.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Other placeholder views */}
         {currentView === "analytics" && (
           <div className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-lg p-6">
@@ -805,14 +1085,13 @@ export default function GastroGuardApp() {
         )}
       </div>
 
-      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 px-4 py-2">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {[
             { id: "dashboard", icon: Home, label: "Dashboard" },
-            { id: "enhanced-log", icon: PenTool, label: "Enhanced Log" },
+            { id: "enhanced-log", icon: PenTool, label: "Log" },
+            { id: "simulation", icon: Zap, label: "Simulate" },
             { id: "analytics", icon: BarChart, label: "Analytics" },
-            { id: "history", icon: History, label: "History" },
             { id: "profile", icon: Activity, label: "Profile" },
           ].map((tab) => (
             <button
